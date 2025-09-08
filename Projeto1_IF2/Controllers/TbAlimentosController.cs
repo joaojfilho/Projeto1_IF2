@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Projeto1_IF2.Models;
-
-namespace Projeto1_IF2
+//João Janduy de Farias Filho
+namespace Projeto1_IF2.Controllers
 {
     [Authorize]
     public class TbAlimentosController : Controller
