@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,7 @@ namespace Projeto1_IF2.Controllers
                 return NotFound();
             }
 
-            var tbProfissional = await _context.TbProfissional
+            TbProfissional? tbProfissional = await _context.TbProfissional
                 .Include(t => t.IdCidadeNavigation)
                 .Include(t => t.IdContratoNavigation)
                 .Include(t => t.IdTipoAcessoNavigation)
@@ -49,8 +50,8 @@ namespace Projeto1_IF2.Controllers
         // GET: TbProfissionals/Create
         public IActionResult Create()
         {
-            ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "IdCidade");
-            ViewData["IdContrato"] = new SelectList(_context.TbContrato, "IdContrato", "IdContrato");
+            ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "Nome");
+            ViewData["IdPlano"] = new SelectList(_context.TbPlano, "IdPlano", "Nome");
             ViewData["IdTipoAcesso"] = new SelectList(_context.TbTipoAcesso, "IdTipoAcesso", "Nome");
             return View();
         }
@@ -60,17 +61,52 @@ namespace Projeto1_IF2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("IdProfissional,IdTipoProfissional,IdContrato,IdTipoAcesso,IdCidade,IdUser,Nome,Cpf,CrmCrn,Especialidade,Logradouro,Numero,Bairro,Cep,Cidade,Estado,Ddd1,Ddd2,Telefone1,Telefone2,Salario")] TbProfissional tbProfissional)
+        public async Task<IActionResult> Create([Bind("IdTipoProfissional,IdTipoAcesso,IdCidade,IdUser,Nome,Cpf,CrmCrn,Especialidade,Logradouro,Numero,Bairro,Cep,Cidade,Estado,Ddd1,Ddd2,Telefone1,Telefone2,Salario")] TbProfissional tbProfissional, [Bind("IdPlano")] TbContrato IdContratoNavigation)
         {
+            ModelState.Remove("IdUser");
+            ModelState.Remove("IdContrato");
             if (ModelState.IsValid)
             {
+                IdContratoNavigation.DataInicio = DateTime.Now;
+                IdContratoNavigation.DataFim = IdContratoNavigation.DataInicio.Value.AddMonths(1);
+                _context.Add(IdContratoNavigation);
+                await _context.SaveChangesAsync();
+
+                var userManager = HttpContext.RequestServices.GetService<UserManager<IdentityUser>>();
+                if (userManager != null)
+                {
+                    var email = User.Identity?.Name;
+                    if (email != null)
+                    {
+                        var user = await userManager.FindByEmailAsync(User.Identity.Name);
+                        if (user != null)
+                        {
+                            tbProfissional.IdUser = user.Id;
+                        }
+                        else
+                        {
+                            return NotFound("Usuário não encontrado.");
+
+                        }
+                    }
+                    else
+                    {
+                        return NotFound("Email do usuário não encontrado.");
+                    }
+                }
+                else
+                {
+                    return NotFound("UserManager não disponível.");
+                }
+
+                tbProfissional.IdContrato = IdContratoNavigation.IdContrato;
                 _context.Add(tbProfissional);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "IdCidade", tbProfissional.IdCidade);
-            ViewData["IdContrato"] = new SelectList(_context.TbContrato, "IdContrato", "IdContrato", tbProfissional.IdContrato);
-            ViewData["IdTipoAcesso"] = new SelectList(_context.TbTipoAcesso, "IdTipoAcesso", "Nome", tbProfissional.IdTipoAcesso);
+            ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "Nome");
+            ViewData["IdPlano"] = new SelectList(_context.TbPlano, "IdPlano", "Nome");
+            ViewData["IdTipoAcesso"] = new SelectList(_context.TbTipoAcesso, "IdTipoAcesso", "Nome");
             return View(tbProfissional);
         }
 
