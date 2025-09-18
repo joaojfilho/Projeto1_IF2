@@ -53,6 +53,7 @@ public partial class TbPaciente
     [Unicode(false)]
     public string Bairro { get; set; }
 
+    [Display(Name = "Cidade")]
     public int? IdCidade { get; set; }
 
     [StringLength(25)]
