@@ -161,6 +161,7 @@ namespace Projeto1_IF2.Controllers
             {
                 return NotFound();
             }
+
             if (await TryUpdateModelAsync<TbProfissional>(
                 tbProfissional,
                 "",
@@ -182,11 +183,12 @@ namespace Projeto1_IF2.Controllers
                         "consulte o administrador do sistema." + ex.ToString());
                 }
             }
+
+            
                 ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "IdCidade", tbProfissional.IdCidade);
                 ViewData["IdContrato"] = new SelectList(_context.TbContrato, "IdContrato", "IdContrato", tbProfissional.IdContrato);
                 ViewData["IdTipoAcesso"] = new SelectList(_context.TbTipoAcesso, "IdTipoAcesso", "Nome", tbProfissional.IdTipoAcesso);
                 return View(tbProfissional);
-
             }
 
 

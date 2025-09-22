@@ -34,8 +34,9 @@ namespace Projeto1_IF2.Controllers
                 return NotFound();
             }
 
-            var tbPaciente = await _context.TbPaciente
+            tbPaciente? tbPaciente = await _context.TbPaciente
                 .Include(t => t.IdCidadeNavigation)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.IdPaciente == id);
             if (tbPaciente == null)
             {
@@ -135,39 +136,48 @@ namespace Projeto1_IF2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdPaciente,Nome,Rg,Cpf,DataNascimento,NomeResponsavel,Sexo,Etnia,Endereco,Bairro,IdCidade,TelResidencial,TelComercial,TelCelular,Profissao,FlgAtleta,FlgGestante")] TbPaciente tbPaciente)
+        public async Task<IActionResult> EditPost(int? id)
         {
-            if (id != tbPaciente.IdPaciente)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            var tbPaciente = await _context.TbPaciente.FirstOrDefaultAsync(p => p.IdPaciente == id);
+
+            if (tbPaciente == null)
+            {
+                return NotFound();
+            }
+
+            if (await TryUpdateModelAsync<TbPaciente>(
+                tbPaciente,
+                "",
+                p => p.IdPaciente, p => p.Nome, p => p.Rg, p => p.Cpf,
+                p => p.DataNascimento, p => p.NomeResponsavel, p => p.Sexo, p => p.Etnia,
+                p => p.Endereco,p => p.Bairro, p => p.IdCidade, p => p.TelResidencial, p => p.TelComercial,
+                p => p.TelCelular, p => p.Profissao, p => p.FlgAtleta, p => p.FlgGestante))
             {
                 try
                 {
-                    _context.Update(tbPaciente);
                     await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateException ex)
                 {
-                    if (!TbPacienteExists(tbPaciente.IdPaciente))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    //Log the error (uncomment ex variable name and write a log.)
+                    ModelState.AddModelError("", "Não foi possível salvar as alterações. " +
+                        "Tente novamente, e se o problema persistir, " +
+                        "consulte o administrador do sistema." + ex.ToString());
                 }
-                return RedirectToAction(nameof(Index));
             }
+            
             ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "IdCidade", tbPaciente.IdCidade);
             return View(tbPaciente);
         }
 
         // GET: TbPacientes/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int? id, bool? saveChangesError = false)
         {
             if (id == null)
             {
@@ -181,6 +191,12 @@ namespace Projeto1_IF2.Controllers
             {
                 return NotFound();
             }
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ViewData["ErrorMessage"] =
+                    "Delete falhou. Tente novamente, e se o problema persistir " +
+                    "consulte o administrador do sistema.";
+            } 
 
             return View(tbPaciente);
         }
@@ -191,13 +207,22 @@ namespace Projeto1_IF2.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var tbPaciente = await _context.TbPaciente.FindAsync(id);
-            if (tbPaciente != null)
+            if (tbPaciente == null)
             {
-                _context.TbPaciente.Remove(tbPaciente);
+                return RedirectToAction(nameof(Index));
             }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            try 
+            { 
+                _context.TbPaciente.Remove(tbPaciente);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException /* ex */)
+            {
+                //Log the error (uncomment ex variable name and write a log.)
+                return RedirectToAction(nameof(Delete), new { id = id, saveChangesError = true });
+            }
         }
 
         private bool TbPacienteExists(int id)
