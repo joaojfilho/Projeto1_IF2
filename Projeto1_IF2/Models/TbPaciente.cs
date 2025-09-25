@@ -106,4 +106,5 @@ public partial class TbPaciente
 
     [InverseProperty("IdPacienteNavigation")]
     public virtual ICollection<TbMedicoPaciente> TbMedicoPaciente { get; set; } = new List<TbMedicoPaciente>();
+    public string IdUser { get; internal set; }
 }

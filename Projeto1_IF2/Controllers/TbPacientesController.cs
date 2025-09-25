@@ -34,7 +34,7 @@ namespace Projeto1_IF2.Controllers
                 return NotFound();
             }
 
-            tbPaciente? tbPaciente = await _context.TbPaciente
+            TbPaciente? tbPaciente = await _context.TbPaciente
                 .Include(t => t.IdCidadeNavigation)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.IdPaciente == id);
@@ -79,7 +79,7 @@ namespace Projeto1_IF2.Controllers
                             var user = await userManager.FindByEmailAsync(User.Identity.Name);
                             if (user != null)
                             {
-                                tbPaciente.IdPaciente = int.Parse(user.Id);
+                                tbPaciente.IdUser = user.Id;
                                 //tbPaciente.IdUser = user.Id;
                             }
                             else
@@ -122,7 +122,7 @@ namespace Projeto1_IF2.Controllers
                 return RedirectToAction("Error", "Home");
             }
 
-            var tbPaciente = await _context.TbPaciente.FindAsync(id);
+            var tbPaciente = await _context.TbPaciente.FirstOrDefaultAsync(p => p.IdPaciente == id);
             if (tbPaciente == null)
             {
                 return NotFound();
