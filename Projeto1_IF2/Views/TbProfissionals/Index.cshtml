@@ -128,11 +128,33 @@
                 @Html.DisplayFor(modelItem => item.IdTipoAcessoNavigation.Nome)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.IdProfissional">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.IdProfissional">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.IdProfissional">Delete</a>
+                <a asp-action="Edit" asp-route-id="@item.IdProfissional" class="btn btn-primary">Editar</a> |
+                    <a asp-action="Details" asp-route-id="@item.IdProfissional" class="btn btn-primary">Detalhes</a> |
+                    <ul class="nav nav-pills">
+                        <li class="nav-item">
+                    <a asp-action="Delete" asp-route-id="@item.IdProfissional" class="btn btn-primary">Excluir</a>
+                        </li>
+                    </ul>
             </td>
         </tr>
 }
     </tbody>
 </table>
+@* @if (Model.Count() > 1)
+{
+    @* <ol class="nav nav-pills">
+        <li class="nav-item"> 
+            <a asp-action="Delete" asp-route-id="@Model.First().IdProfissional" class="btn btn-primary"><i class="bi-alarm"></i>Delete</a>
+        </li>
+    </ol> 
+} *@
+@{
+     @if (Model.Count() > 1)
+     {
+        var i = 0;
+        while (i <5){
+        <a asp-action="Delete" asp-route-id="@Model.First().IdProfissional" class="btn btn-primary"><i class="bi-alarm"></i>Delete</a>
+        i++;
+        }
+     }
+}
