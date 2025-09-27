@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Projeto1_IF2.Models.TbProfissional>
+﻿@model IEnumerable<Projeto1_IF2.Models.TbProfissionalResumido>
 
 @{
     ViewData["Title"] = "Index";
@@ -14,13 +14,10 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.IdTipoProfissional)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IdUser)
-            </th>
-            <th>
                 @Html.DisplayNameFor(model => model.Nome)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NomePlano)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Cpf)
@@ -30,6 +27,9 @@
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Especialidade)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NomeCidade)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Logradouro)
@@ -58,7 +58,7 @@
             <th>
                 @Html.DisplayNameFor(model => model.Salario)
             </th>
-            <th>
+            @* <th>
                 @Html.DisplayNameFor(model => model.IdCidadeNavigation.Nome)
             </th>
             <th>
@@ -67,20 +67,20 @@
             <th>
                 @Html.DisplayNameFor(model => model.IdTipoAcessoNavigation)
             </th>
-            <th></th>
+ *@            <th></th>
         </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.IdTipoProfissional)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IdUser)
-            </td>
-            <td>
                 @Html.DisplayFor(modelItem => item.Nome)
+            </td>
+            @* <td>
+                @Html.DisplayFor(modelItem => item.IdContratoNavigation.IdPlanoNavigation.Nome)
+            <td> *@
+            <td>
+                @Html.DisplayFor(modelItem => item.NomePlano)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Cpf)
@@ -90,6 +90,9 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Especialidade)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NomeCidade)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Logradouro)
@@ -117,15 +120,6 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Salario)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IdCidadeNavigation.Nome)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IdContratoNavigation.IdContrato)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IdTipoAcessoNavigation.Nome)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.IdProfissional" class="btn btn-primary">Editar</a> |
