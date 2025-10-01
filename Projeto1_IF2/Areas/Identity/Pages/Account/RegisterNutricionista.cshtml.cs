@@ -2,6 +2,16 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
+using Projeto1_IF2.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -10,18 +20,10 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Logging;
 
 namespace Projeto1_IF2.Areas.Identity.Pages.Account
 {
-    public class RegisterModel : PageModel
+    public class RegisterModelNutricionista : PageModel
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
@@ -29,13 +31,16 @@ namespace Projeto1_IF2.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly db_IF2Context _context;
 
-        public RegisterModel(
+        public RegisterModelNutricionista(
             UserManager<IdentityUser> userManager,
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            db_IF2Context context
+            )
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -43,6 +48,7 @@ namespace Projeto1_IF2.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _context = context;
         }
 
         /// <summary>
@@ -97,21 +103,31 @@ namespace Projeto1_IF2.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+            public TbProfissional tbProfissional { get; set; }
         }
 
 
         public async Task OnGetAsync(string returnUrl = null)
         {
+            ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "Nome");
+            ViewData["IdPlano"] = new SelectList(_context.TbPlano, "IdPlano", "Nome");
+            ViewData["IdTipoAcesso"] = new SelectList(_context.TbTipoAcesso, "IdTipoAcesso", "Nome");
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
-            returnUrl ??= Url.Content("~/");
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            if (ModelState.IsValid)
+            try 
             {
+                returnUrl ??= Url.Content("~/");
+                ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+                ModelState.Remove("Input.tbProfissional.IdUser");
+                ModelState.Remove("Input.tbProfissional.IdContrato");
+
+                if (ModelState.IsValid)
+                {
                 var user = CreateUser();
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -122,35 +138,76 @@ namespace Projeto1_IF2.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
-                    var userId = await _userManager.GetUserIdAsync(user);
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = Url.Page(
-                        "/Account/ConfirmEmail",
-                        pageHandler: null,
-                        values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
-                        protocol: Request.Scheme);
+                     await _userManager.AddToRoleAsync(user, "Nutricionista");
 
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                        ////////////////////////////////////////////////////////
+                        Input.tbProfissional.IdContratoNavigation.DataInicio = DateTime.Now;
+                        Input.tbProfissional.IdContratoNavigation.DataFim = Input.tbProfissional.IdContratoNavigation.DataInicio.Value.AddMonths(1);
+                        _context.Add(Input.tbProfissional.IdContratoNavigation);
+                        await _context.SaveChangesAsync();
 
-                    if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                    {
-                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
+                        //var userManager = HttpContext.RequestServices.GetService<UserManager<IdentityUser>>();
+                        //if (userManager != null)
+                        //{
+                        //        if (user != null)
+                        //        {
+                        //            Input.tbProfissional.IdUser = user.Id;
+                        //        }
+                        //        else
+                        //        {
+                        //            return NotFound("Usuário não encontrado.");
+
+                        //        }
+                        //}
+                        //else
+                        //{
+                        //    return NotFound("UserManager não disponível.");
+                        //}
+
+                        Input.tbProfissional.IdUser = user.Id;
+                        Input.tbProfissional.IdContrato = Input.tbProfissional.IdContratoNavigation.IdContrato;
+                        _context.Add(Input.tbProfissional);
+                        await _context.SaveChangesAsync();
+                        //return RedirectToAction(nameof(Index));
+
+                        ////////////////////////////////////////////////////////
+                        var userId = await _userManager.GetUserIdAsync(user);
+                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                        var callbackUrl = Url.Page(
+                            "/Account/ConfirmEmail",
+                            pageHandler: null,
+                            values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                            protocol: Request.Scheme);
+
+                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+                            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+                        if (_userManager.Options.SignIn.RequireConfirmedAccount)
+                        {
+                            return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
+                        }
+                        else
+                        {
+                            await _signInManager.SignInAsync(user, isPersistent: false);
+                            return LocalRedirect(returnUrl);
+                        }
                     }
-                    else
+                    foreach (var error in result.Errors)
                     {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        return LocalRedirect(returnUrl);
+                        ModelState.AddModelError(string.Empty, error.Description);
                     }
                 }
-                foreach (var error in result.Errors)
+            }catch (Exception ex)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                // Handle the exception (log it, display a message, etc.)
+                ModelState.AddModelError(string.Empty, "An error occurred while assigning the role: " + ex.Message);
+                return Page();
             }
-
             // If we got this far, something failed, redisplay form
+            ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "Nome", Input.tbProfissional.IdCidade);
+            ViewData["IdPlano"] = new SelectList(_context.TbPlano, "IdPlano", "Nome", Input.tbProfissional.IdContratoNavigation.IdPlano);
+            ViewData["IdTipoAcesso"] = new SelectList(_context.TbTipoAcesso, "IdTipoAcesso", "Nome", Input.tbProfissional.IdTipoAcesso);
             return Page();
         }
 
