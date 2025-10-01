@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace Projeto1_IF2.Controllers
 {
+    [Authorize]
     public class TbProfissionalsController : Controller
     {
         private readonly db_IF2Context _context;
@@ -30,6 +32,10 @@ namespace Projeto1_IF2.Controllers
 
 
         // GET: TbProfissionals
+        [Authorize(Roles = "Medico,Nutricionista")] //Medico ou Nutricionista.
+        //Nas duas linhas abaixo, ele teria que ser medico e nutricionista.
+        //[Authorize(Roles = "Medico")]
+        //[Authorize(Roles = "Nutricionista")]
         public async Task<IActionResult> Index()
         {
             //var db_IF2Context = _context.TbProfissional.Include(t => t.IdCidadeNavigation).
@@ -60,35 +66,65 @@ namespace Projeto1_IF2.Controllers
             //                   where plano.IdPlano == 1
             //                   select pro;
 
+            if (User.IsInRole("Medico"))
+            {
+                // Metodo Otimizado
+                var db_IFContext = (from pro in _context.TbProfissional
+                                    where (Plano)pro.IdContratoNavigation.IdPlano == Plano.MedicoTotal
+                                    select new TbProfissionalResumido
+                                    {
+                                        Nome = pro.Nome,
+                                        NomeCidade = pro.IdCidadeNavigation.Nome,
+                                        NomePlano = pro.IdContratoNavigation.IdPlanoNavigation.Nome,
+                                        IdProfissional = pro.IdProfissional.ToString(),
+                                        Cpf = pro.Cpf,
+                                        CrmCrn = pro.CrmCrn,
+                                        Especialidade = pro.Especialidade,
+                                        Logradouro = pro.Logradouro,
+                                        Numero = pro.Numero,
+                                        Bairro = pro.Bairro,
+                                        Cep = pro.Cep,
+                                        Ddd1 = pro.Ddd1,
+                                        Ddd2 = pro.Ddd2,
+                                        Telefone1 = pro.Telefone1,
+                                        Telefone2 = pro.Telefone2,
+                                        Salario = pro.Salario,
+                                    });
 
-            // Metodo Otimizado
-            var db_IFContext = (from pro in _context.TbProfissional
-                                where (Plano)pro.IdContratoNavigation.IdPlano == Plano.MedicoTotal
-                                select new TbProfissionalResumido
-                                {
-                                    Nome = pro.Nome,
-                                    NomeCidade = pro.IdCidadeNavigation.Nome,
-                                    NomePlano = pro.IdContratoNavigation.IdPlanoNavigation.Nome,
-                                    IdProfissional = pro.IdProfissional.ToString(),
-                                    Cpf = pro.Cpf,
-                                    CrmCrn = pro.CrmCrn,
-                                    Especialidade = pro.Especialidade,
-                                    Logradouro = pro.Logradouro,
-                                    Numero = pro.Numero,
-                                    Bairro = pro.Bairro,
-                                    Cep = pro.Cep,
-                                    Ddd1 = pro.Ddd1,
-                                    Ddd2 = pro.Ddd2,
-                                    Telefone1 = pro.Telefone1,
-                                    Telefone2 = pro.Telefone2,
-                                    Salario = pro.Salario,
-                                });
 
-
-            return View(db_IFContext);
+                return View(db_IFContext);
+            }else if (User.IsInRole("Nutricionista"))
+            {
+                var db_IFContext = (from pro in _context.TbProfissional
+                                    where (Plano)pro.IdContratoNavigation.IdPlano == Plano.Nutricionista
+                                    select new TbProfissionalResumido
+                                    {
+                                        Nome = pro.Nome,
+                                        NomeCidade = pro.IdCidadeNavigation.Nome,
+                                        NomePlano = pro.IdContratoNavigation.IdPlanoNavigation.Nome,
+                                        IdProfissional = pro.IdProfissional.ToString(),
+                                        Cpf = pro.Cpf,
+                                        CrmCrn = pro.CrmCrn,
+                                        Especialidade = pro.Especialidade,
+                                        Logradouro = pro.Logradouro,
+                                        Numero = pro.Numero,
+                                        Bairro = pro.Bairro,
+                                        Cep = pro.Cep,
+                                        Ddd1 = pro.Ddd1,
+                                        Ddd2 = pro.Ddd2,
+                                        Telefone1 = pro.Telefone1,
+                                        Telefone2 = pro.Telefone2,
+                                        Salario = pro.Salario,
+                                    });
+                return View(db_IFContext);
+            }
+            else{
+                return RedirectToAction("Index", "Home");
+            }
         }
 
         // GET: TbProfissionals/Details/5
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)

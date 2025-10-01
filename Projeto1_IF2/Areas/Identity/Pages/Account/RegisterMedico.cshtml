@@ -108,11 +108,15 @@
                 <input asp-for="Input.tbProfissional.Telefone2" class="form-control" />
                 <span asp-validation-for="Input.tbProfissional.Telefone2" class="text-danger"></span>
             </div>
+            @if (User.IsInRole("GerenteMedico"))
+            {
+                @* <div class="form-group) *@
             <div class="form-group">
                 <label asp-for="Input.tbProfissional.Salario" class="control-label"></label>
                 <input asp-for="Input.tbProfissional.Salario" class="form-control" />
                 <span asp-validation-for="Input.tbProfissional.Salario" class="text-danger"></span>
             </div>
+            }
             @* <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div> *@
