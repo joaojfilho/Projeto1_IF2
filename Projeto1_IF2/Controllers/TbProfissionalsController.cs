@@ -45,30 +45,54 @@ namespace Projeto1_IF2.Controllers
             //    Include(t => t.IdContratoNavigation).ThenInclude(t => t.IdPlanoNavigation).Include(t => t.IdTipoAcessoNavigation);
             //return View(await db_IF2Context.ToListAsync());
 
-                ////Metodo 1
-                //var db_IFContext = _context.TbProfissional
-                //.Include(t => t.IdCidadeNavigation)
-                //.Include(t => t.IdContratoNavigation)
-                //.ThenInclude(s => s.IdPlanoNavigation)
-                //.Include(t => t.IdTipoAcessoNavigation)
-                //.Where(t => t.IdContratoNavigation.IdPlano == 1);
+            ////Metodo 1
+            //var db_IFContext = _context.TbProfissional
+            //.Include(t => t.IdCidadeNavigation)
+            //.Include(t => t.IdContratoNavigation)
+            //.ThenInclude(s => s.IdPlanoNavigation)
+            //.Include(t => t.IdTipoAcessoNavigation)
+            //.Where(t => t.IdContratoNavigation.IdPlano == 1);
 
-                ////Metodo 2
-                //var db_IFContext = (from pro in _context.TbProfissional
-                //                    where (Plano)pro.IdContratoNavigation.IdPlano == Plano.MedicoTotal
-                //                    select pro)
-                //.Include(t => t.IdTipoAcessoNavigation)
-                //.Include(t => t.IdCidadeNavigation)
-                //.Include(pro => pro.IdContratoNavigation)
-                //.ThenInclude(contrato => contrato.IdPlanoNavigation);
+            ////Metodo 2
+            //var db_IFContext = (from pro in _context.TbProfissional
+            //                    where (Plano)pro.IdContratoNavigation.IdPlano == Plano.MedicoTotal
+            //                    select pro)
+            //.Include(t => t.IdTipoAcessoNavigation)
+            //.Include(t => t.IdCidadeNavigation)
+            //.Include(pro => pro.IdContratoNavigation)
+            //.ThenInclude(contrato => contrato.IdPlanoNavigation);
 
-                //Metodo 3
-                //var db_IFContext = from pro in _context.TbProfissional
-                //                   join contrato in _context.TbContrato on pro.IdContrato equals contrato.IdContrato
-                //                   join plano in _context.TbPlano on contrato.IdPlano equals plano.IdPlano
-                //                   where plano.IdPlano == 1
-                //                   select pro;
-            if (User.IsInRole("GerenteMedico"))
+            //Metodo 3
+            //var db_IFContext = from pro in _context.TbProfissional
+            //                   join contrato in _context.TbContrato on pro.IdContrato equals contrato.IdContrato
+            //                   join plano in _context.TbPlano on contrato.IdPlano equals plano.IdPlano
+            //                   where plano.IdPlano == 1
+            //                   select pro;
+            if (User.IsInRole("GerenteGeral"))
+            {
+                var db_IFContext = (from pro in _context.TbProfissional
+                                    select new TbProfissionalResumido
+                                    {
+                                        Nome = pro.Nome,
+                                        NomeCidade = pro.IdCidadeNavigation.Nome,
+                                        NomePlano = pro.IdContratoNavigation.IdPlanoNavigation.Nome,
+                                        IdProfissional = pro.IdProfissional.ToString(),
+                                        Cpf = pro.Cpf,
+                                        CrmCrn = pro.CrmCrn,
+                                        Especialidade = pro.Especialidade,
+                                        Logradouro = pro.Logradouro,
+                                        Numero = pro.Numero,
+                                        Bairro = pro.Bairro,
+                                        Cep = pro.Cep,
+                                        Ddd1 = pro.Ddd1,
+                                        Ddd2 = pro.Ddd2,
+                                        Telefone1 = pro.Telefone1,
+                                        Telefone2 = pro.Telefone2,
+                                        Salario = pro.Salario,
+                                    });
+                return View(db_IFContext);
+            }
+            else if (User.IsInRole("GerenteMedico"))
             {
                 var db_IFContext = (from pro in _context.TbProfissional
                                     where (Plano)pro.IdContratoNavigation.IdPlano == Plano.MedicoTotal

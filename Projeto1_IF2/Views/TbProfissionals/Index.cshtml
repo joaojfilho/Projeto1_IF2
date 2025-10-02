@@ -135,7 +135,8 @@
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.IdProfissional" class="btn btn-sm btn-outline-primary">Editar</a>
                     <a asp-action="Details" asp-route-id="@item.IdProfissional" class="btn btn-sm btn-outline-secondary">Detalhes</a>
-                    @if (User.IsInRole("GerenteNutricionista") || User.IsInRole("GerenteMedico"))
+                    @if (User.IsInRole("GerenteNutricionista") || User.IsInRole("GerenteMedico")
+                                    || User.IsInRole("GerenteGeral"))
                     {
                         <a asp-action="Delete" asp-route-id="@item.IdProfissional" class="btn btn-sm btn-outline-danger">Excluir</a>
                     }
