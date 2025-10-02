@@ -121,15 +121,25 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Salario)
             </td>
-            <td>
+            @* <td>
                 <a asp-action="Edit" asp-route-id="@item.IdProfissional" class="btn btn-primary">Editar</a> |
                     <a asp-action="Details" asp-route-id="@item.IdProfissional" class="btn btn-primary">Detalhes</a> |
+                    @if(User.IsInRole("GerenteNutricionista")){
                     <ul class="nav nav-pills">
                         <li class="nav-item">
                     <a asp-action="Delete" asp-route-id="@item.IdProfissional" class="btn btn-primary">Excluir</a>
                         </li>
                     </ul>
-            </td>
+                    }
+            </td> *@
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.IdProfissional" class="btn btn-sm btn-outline-primary">Editar</a>
+                    <a asp-action="Details" asp-route-id="@item.IdProfissional" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                    @if (User.IsInRole("GerenteNutricionista") || User.IsInRole("GerenteMedico"))
+                    {
+                        <a asp-action="Delete" asp-route-id="@item.IdProfissional" class="btn btn-sm btn-outline-danger">Excluir</a>
+                    }
+                </td>
         </tr>
 }
     </tbody>
@@ -142,7 +152,7 @@
         </li>
     </ol> 
 } *@
-@{
+@* @{
      @if (Model.Count() > 1)
      {
         var i = 0;
@@ -151,4 +161,4 @@
         i++;
         }
      }
-}
+} *@
