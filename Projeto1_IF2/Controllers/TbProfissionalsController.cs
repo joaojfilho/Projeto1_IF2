@@ -241,63 +241,70 @@ namespace Projeto1_IF2.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IdTipoProfissional,IdTipoAcesso,IdCidade,IdUser,Nome,Cpf,CrmCrn,Especialidade,Logradouro,Numero,Bairro,Cep,Ddd1,Ddd2,Telefone1,Telefone2,Salario")] TbProfissional tbProfissional, [Bind("IdPlano")] TbContrato IdContratoNavigation)
         {
-            try
+            if (!User.IsInRole("Medico") || !User.IsInRole("Nutricionista"))
             {
-                ModelState.Remove("IdUser");
-                ModelState.Remove("IdContrato");
-            
-                if (ModelState.IsValid)
+                try
                 {
-                    IdContratoNavigation.DataInicio = DateTime.Now;
-                    IdContratoNavigation.DataFim = IdContratoNavigation.DataInicio.Value.AddMonths(1);
-                    _context.Add(IdContratoNavigation);
-                    await _context.SaveChangesAsync();
+                    ModelState.Remove("IdUser");
+                    ModelState.Remove("IdContrato");
 
-                    var userManager = HttpContext.RequestServices.GetService<UserManager<IdentityUser>>();
-                    if (userManager != null)
+                    if (ModelState.IsValid)
                     {
-                        var email = User.Identity?.Name;
-                        if (email != null)
+                        IdContratoNavigation.DataInicio = DateTime.Now;
+                        IdContratoNavigation.DataFim = IdContratoNavigation.DataInicio.Value.AddMonths(1);
+                        _context.Add(IdContratoNavigation);
+                        await _context.SaveChangesAsync();
+
+                        var userManager = HttpContext.RequestServices.GetService<UserManager<IdentityUser>>();
+                        if (userManager != null)
                         {
-                            var user = await userManager.FindByEmailAsync(User.Identity.Name);
-                            if (user != null)
+                            var email = User.Identity?.Name;
+                            if (email != null)
                             {
-                                tbProfissional.IdUser = user.Id;
+                                var user = await userManager.FindByEmailAsync(User.Identity.Name);
+                                if (user != null)
+                                {
+                                    tbProfissional.IdUser = user.Id;
+                                }
+                                else
+                                {
+                                    return NotFound("Usuário não encontrado.");
+
+                                }
                             }
                             else
                             {
-                                return NotFound("Usuário não encontrado.");
-
+                                return NotFound("Email do usuário não encontrado.");
                             }
                         }
                         else
                         {
-                            return NotFound("Email do usuário não encontrado.");
+                            return NotFound("UserManager não disponível.");
                         }
-                    }
-                    else
-                    {
-                        return NotFound("UserManager não disponível.");
-                    }
 
-                    tbProfissional.IdContrato = IdContratoNavigation.IdContrato;
-                    _context.Add(tbProfissional);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
+                        tbProfissional.IdContrato = IdContratoNavigation.IdContrato;
+                        _context.Add(tbProfissional);
+                        await _context.SaveChangesAsync();
+                        return RedirectToAction(nameof(Index));
+                    }
                 }
+                catch (DbUpdateException dex)
+                {
+                    ModelState.AddModelError("", "Erro ao Salvar Modelo." + dex.ToString());
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "Erro." + ex.ToString());
+                }
+                ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "Nome", tbProfissional.IdCidade);
+                ViewData["IdPlano"] = new SelectList(_context.TbPlano, "IdPlano", "Nome", IdContratoNavigation.IdPlano);
+                ViewData["IdTipoAcesso"] = new SelectList(_context.TbTipoAcesso, "IdTipoAcesso", "Nome", tbProfissional.IdTipoAcesso);
+                return View(tbProfissional);
             }
-            catch (DbUpdateException dex)
+            else
             {
-                ModelState.AddModelError("", "Erro ao Salvar Modelo." + dex.ToString());
+                return NotFound("Gerentes não podem cadastrar profissionais.");
             }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", "Erro." + ex.ToString());
-            }
-            ViewData["IdCidade"] = new SelectList(_context.TbCidade, "IdCidade", "Nome", tbProfissional.IdCidade);
-            ViewData["IdPlano"] = new SelectList(_context.TbPlano, "IdPlano", "Nome",IdContratoNavigation.IdPlano);
-            ViewData["IdTipoAcesso"] = new SelectList(_context.TbTipoAcesso, "IdTipoAcesso", "Nome", tbProfissional.IdTipoAcesso);
-            return View(tbProfissional);
         }
 
         // GET: TbProfissionals/Edit/5
@@ -388,12 +395,7 @@ namespace Projeto1_IF2.Controllers
             {
                 return NotFound();
             }
-            if (saveChangesError.GetValueOrDefault())
-            {
-                ViewData["ErrorMessage"] =
-                    "Delete falhou. Tente novamente, e se o problema persistir " +
-                    "consulte o administrador do sistema.";
-            }
+           
 
             return View(tbProfissional);
         }
@@ -409,10 +411,23 @@ namespace Projeto1_IF2.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            try 
+            // VERIFICAÇÃO ADICIONADA: Verificar se existem pacientes vinculados a este profissional
+            bool temPacientes = await _context.TbMedicoPaciente
+                .AnyAsync(mp => mp.IdProfissional == id);
+
+            if (temPacientes)
+            {
+                // Se houver pacientes vinculados, mostra alerta JavaScript
+                TempData["AlertMessage"] = "Não é possível excluir o profissional pois existem pacientes vinculados a ele.";
+                TempData["AlertType"] = "error";
+                return RedirectToAction(nameof(Delete), new { id = id });
+            }
+
+
+            try
             { 
                 _context.TbProfissional.Remove(tbProfissional);
-                await _context.SaveChangesAsync();
+                //await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException /* ex */)
