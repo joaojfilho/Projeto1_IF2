@@ -22,8 +22,26 @@ namespace Projeto1_IF2.Controllers
         // GET: TbPacientes
         public async Task<IActionResult> Index()
         {
-            var db_IF2Context = _context.TbPaciente.Include(t => t.IdCidadeNavigation);
-            return View(await db_IF2Context.ToListAsync());
+            var userManager = HttpContext.RequestServices.GetService<UserManager<IdentityUser>>();
+            var currentUserId = userManager?.GetUserId(User);
+
+
+            var medico = await _context.TbProfissional
+                    .FirstOrDefaultAsync(m => m.IdUser == currentUserId);
+            // Buscar os pacientes associados a este médico através da tabela de relacionamento
+            var pacientesIds = await _context.TbMedicoPaciente
+                .Where(mp => mp.IdProfissional == medico.IdProfissional)
+                .Select(mp => mp.IdPaciente)
+                .ToListAsync();
+
+            // Buscar os pacientes com base nos IDs encontrados
+            var db_IF2Context = await _context.TbPaciente
+                .Where(p => pacientesIds.Contains(p.IdPaciente))
+                .Include(t => t.IdCidadeNavigation)
+                .ToListAsync();
+
+            //var db_IF2Context = _context.TbPaciente.Include(t => t.IdCidadeNavigation);
+            return View(db_IF2Context);
         }
 
         // GET: TbPacientes/Details/5
