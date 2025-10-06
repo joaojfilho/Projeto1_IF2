@@ -25,6 +25,11 @@ namespace Projeto1_IF2.Controllers
             var userManager = HttpContext.RequestServices.GetService<UserManager<IdentityUser>>();
             var currentUserId = userManager?.GetUserId(User);
 
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                var db_IF2ContextPre = _context.TbPaciente.Include(t => t.IdCidadeNavigation);
+                return View(await db_IF2ContextPre.ToListAsync());
+            }
 
             var medico = await _context.TbProfissional
                     .FirstOrDefaultAsync(m => m.IdUser == currentUserId);
