@@ -427,7 +427,7 @@ namespace Projeto1_IF2.Controllers
             try
             { 
                 _context.TbProfissional.Remove(tbProfissional);
-                //await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException /* ex */)
